@@ -1,0 +1,64 @@
+{
+  "appId": "com.cpotify.app",
+  "appName": "Cpotify",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  },
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": true,
+    "backgroundColor": "#121212",
+    "overrideUserAgent": "Cpotify/2.0.0"
+  },
+  "ios": {
+    "contentInset": "automatic",
+    "scrollEnabled": true,
+    "backgroundColor": "#121212"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#121212",
+      "showSpinner": false,
+      "androidScaleType": "CENTER_CROP"
+    },
+    "StatusBar": {
+      "style": "dark",
+      "backgroundColor": "#121212",
+      "overlaysWebContent": true
+    },
+    "Keyboard": {
+      "resize": "body",
+      "style": "dark",
+      "resizeOnFullScreen": true
+    },
+    "App": {
+      "launchAutoHide": true
+    },
+    "Haptics": {},
+    "Network": {},
+    "Preferences": {
+      "group": "spotify_mobile_prefs"
+    },
+    "MediaSession": {
+      "notificationIcon": "ic_music_note",
+      "notificationChannelId": "spotify_media_playback",
+      "notificationChannelName": "Cpotify Media Playback"
+    },
+    "MyspotiBridge": {
+      "adBlockEnabled": true,
+      "blockRules": [],
+      "cosmeticFilterEnabled": true
+    }
+  },
+  "android": {
+    "plugins": {
+      "MyspotiBridge": {
+        "classpath": "com.cpotify.app.myspoti.MyspotiBridgePlugin"
+      }
+    }
+  }
+}

@@ -1,0 +1,84 @@
+:root {
+  --spotify-green: #1DB954;
+  --spotify-green-hover: #1ed760;
+  --spotify-black: #121212;
+  --spotify-dark-gray: #181818;
+  --spotify-gray: #282828;
+  --spotify-light-gray: #b3b3b3;
+  --spotify-white: #ffffff;
+  --spotify-error: #e22134;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --header-height: 56px;
+  --player-height: 90px;
+  --sidebar-width: 240px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body, #app { height: 100%; width: 100%; overscroll-behavior: none; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: var(--spotify-black); color: var(--spotify-white); line-height: 1.5; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+input, select, textarea { font-family: inherit; font-size: inherit; }
+img { max-width: 100%; display: block; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--spotify-gray); border-radius: var(--radius-full); }
+::-webkit-scrollbar-thumb:hover { background: var(--spotify-light-gray); }
+::selection { background: var(--spotify-green); color: var(--spotify-black); }
+
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.gap-1 { gap: 4px; } .gap-2 { gap: 8px; } .gap-3 { gap: 12px; } .gap-4 { gap: 16px; }
+.p-2 { padding: 8px; } .p-3 { padding: 12px; } .p-4 { padding: 16px; }
+.px-3 { padding-left: 12px; padding-right: 12px; } .py-2 { padding-top: 8px; padding-bottom: 8px; }
+.rounded { border-radius: var(--radius-md); } .rounded-full { border-radius: var(--radius-full); }
+.text-sm { font-size: 14px; } .text-xs { font-size: 12px; } .text-lg { font-size: 16px; }
+.font-medium { font-weight: 500; } .font-semibold { font-weight: 600; } .font-bold { font-weight: 700; }
+.text-gray { color: var(--spotify-light-gray); } .text-green { color: var(--spotify-green); } .text-white { color: var(--spotify-white); }
+.bg-green { background: var(--spotify-green); } .bg-gray { background: var(--spotify-gray); } .bg-dark { background: var(--spotify-dark-gray); }
+.hover\:bg-green:hover { background: var(--spotify-green-hover); }
+.hover\:text-white:hover { color: var(--spotify-white); }
+.hover\:text-green:hover { color: var(--spotify-green); }
+.transition { transition: all var(--transition-fast); }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.icon-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: var(--radius-full); color: var(--spotify-light-gray); transition: all var(--transition-fast); }
+.icon-btn:hover { background: rgba(255, 255, 255, 0.1); color: var(--spotify-white); }
+.icon-btn:active { transform: scale(0.95); }
+.icon-btn-green { background: var(--spotify-green); color: var(--spotify-black); width: 48px; height: 48px; }
+.icon-btn-green:hover { background: var(--spotify-green-hover); transform: scale(1.05); }
+.play-btn { width: 56px; height: 56px; background: var(--spotify-green); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-md); transition: all var(--transition-normal); }
+.play-btn:hover { background: var(--spotify-green-hover); transform: scale(1.08); box-shadow: var(--shadow-lg); }
+.play-btn:active { transform: scale(0.95); }
+.slider { -webkit-appearance: none; appearance: none; height: 4px; border-radius: var(--radius-full); background: var(--spotify-gray); outline: none; cursor: pointer; }
+.slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; border-radius: var(--radius-full); background: var(--spotify-green); transform: scale(0); transition: transform var(--transition-fast); }
+.slider:hover::-webkit-slider-thumb { transform: scale(1); }
+.slider:active::-webkit-slider-thumb { transform: scale(1.3); }
+.slider::-moz-range-thumb { width: 12px; height: 12px; border-radius: var(--radius-full); background: var(--spotify-green); border: none; transform: scale(0); transition: transform var(--transition-fast); }
+.slider:hover::-moz-range-thumb { transform: scale(1); }
+.card { background: var(--spotify-dark-gray); border-radius: var(--radius-md); padding: 16px; transition: background var(--transition-fast); }
+.card:hover { background: var(--spotify-gray); }
+.row-item { display: flex; align-items: center; gap: 16px; padding: 8px 12px; border-radius: var(--radius-sm); transition: background var(--transition-fast); }
+.row-item:hover { background: rgba(255, 255, 255, 0.05); }
+.section-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; letter-spacing: 0.5px; }
+.badge { display: inline-flex; align-items: center; padding: 2px 8px; font-size: 11px; font-weight: 700; border-radius: var(--radius-full); text-transform: uppercase; letter-spacing: 0.5px; }
+.badge-ad { background: var(--spotify-error); color: var(--spotify-white); animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+.loading-spinner { width: 24px; height: 24px; border: 2px solid rgba(255, 255, 255, 0.2); border-top-color: var(--spotify-green); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px 24px; text-align: center; color: var(--spotify-light-gray); }
+.empty-state-icon { width: 64px; height: 64px; margin-bottom: 16px; opacity: 0.5; }
+@media (max-width: 768px) { :root { --header-height: 56px; --player-height: 84px; } }
+@media (max-width: 480px) { :root { --player-height: 78px; } }

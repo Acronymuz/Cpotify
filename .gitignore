@@ -1,0 +1,41 @@
+# Dependencies and build output
+node_modules/
+www/
+dist/
+build/
+.gradle/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Local secrets and machine-specific config
+.env
+.env.*
+!.env.example
+android/local.properties
+secrun.yaml
+
+# Generated Capacitor/Android artifacts
+android/app/build/
+android/build/
+android/.gradle/
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+android/app/src/main/assets/capacitor.plugins.json
+android/capacitor-cordova-android-plugins/
+*.apk
+*.apks
+*.aab
+*.tgz
+
+# Logs and editor/OS noise
+*.log
+npm-debug.log*
+.DS_Store
+.idea/
+*.iml
+.trashed-*
+
+# Internal handoff notes (contain machine paths/device details)
+HANDOFF.md
+notification-popup-control-handoff.md

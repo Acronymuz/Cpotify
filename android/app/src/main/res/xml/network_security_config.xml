@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">192.168.1.0/24</domain>
+    </domain-config>
+    <domain-config>
+        <domain includeSubdomains="true">api.spotify.com</domain>
+        <domain includeSubdomains="true">accounts.spotify.com</domain>
+        <domain includeSubdomains="true">open.spotify.com</domain>
+        <domain includeSubdomains="true">sdk.scdn.co</domain>
+        <domain includeSubdomains="true">i.scdn.co</domain>
+        <domain includeSubdomains="true">mosaic.scdn.co</domain>
+        <domain includeSubdomains="true">seed-mix-image.spotify.com</domain>
+        <domain includeSubdomains="true">geo-image.spotify.com</domain>
+        <domain includeSubdomains="true">d3rt1990lpmkn.cloudfront.net</domain>
+    </domain-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

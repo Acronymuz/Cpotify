@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">Cpotify</string>
+    <string name="title_activity_main">Cpotify</string>
+    <string name="spotify_media_playback">Cpotify Media Playback</string>
+    <string name="spotify_media_playback_desc">Media playback controls and notifications</string>
+</resources>

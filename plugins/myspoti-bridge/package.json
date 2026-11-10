@@ -1,0 +1,45 @@
+{
+  "name": "myspoti-bridge",
+  "version": "1.0.0",
+  "description": "Myspoti-style Spotify Web Player bridge for Capacitor",
+  "main": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "module": "dist/esm/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "types": "./dist/esm/index.d.ts"
+    }
+  },
+  "files": [
+    "dist/",
+    "src/android/",
+    "capacitor.config.json"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "capacitor",
+    "plugin",
+    "spotify",
+    "myspoti",
+    "web-player"
+  ],
+  "author": "",
+  "license": "MIT",
+  "peerDependencies": {
+    "@capacitor/core": "^8.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/core": "^8.6.0",
+    "typescript": "^5.6.0"
+  },
+  "capacitor": {
+    "android": {
+      "src": "src/android"
+    }
+  }
+}
