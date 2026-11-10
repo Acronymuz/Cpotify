@@ -126,7 +126,8 @@
     }
 
     var close = r ? findButton(CLOSE_LABEL, r) : null;
-    var isAd = !!r && (ctaPresent || (!title && !!close) || (!title && durationMs === 0 && positionMs > 0));
+    var hasTrackArt = !!img || !!titleEl;
+    var isAd = !!r && (ctaPresent || (!hasTrackArt && !!close) || (!hasTrackArt && durationMs === 0 && positionMs > 0));
     if (!isAd) adMitigated = false;
 
     var next = findButton(NEXT_LABEL);
@@ -138,7 +139,7 @@
       state: {
         track: {
           kind: isAd ? 'ad' : 'track',
-          name: title || (isAd ? 'Iklan' : ''),
+          name: isAd ? 'Iklan' : title,
           artists: [{ name: artist || '' }],
           image: image,
           durationMs: durationMs
@@ -204,9 +205,22 @@
     } catch (e) {}
   }
 
+  var lastSignature = null;
+
   function tick() {
     var snap = snapshot();
     if (!snap.isAd && !snap.state.track.name) return;
+    var track = snap.state.track;
+    var signature = [
+      track.name,
+      track.artists[0] && track.artists[0].name,
+      track.image,
+      snap.state.isPaused,
+      snap.isAd,
+      Math.floor(snap.state.positionMs / 1000)
+    ].join('|');
+    if (signature === lastSignature) return;
+    lastSignature = signature;
     post({ type: 'state', state: snap.state });
     if (snap.isAd) mitigateAd(snap);
   }

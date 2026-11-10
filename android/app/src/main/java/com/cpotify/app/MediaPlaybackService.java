@@ -17,7 +17,9 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.PowerManager;
+import android.os.SystemClock;
 import android.util.Log;
+import android.util.LruCache;
 
 import androidx.annotation.Nullable;
 
@@ -59,6 +61,11 @@ public class MediaPlaybackService extends Service {
     private long lastDuration = 0;
     private long lastPosition = 0;
     private boolean lastPlaying = true;
+    private String lastNotifyKey = null;
+    private long lastNotifyAt = 0;
+    private String lastFailedArtUrl = null;
+    private long lastArtAttemptAt = 0;
+    private final LruCache<String, Bitmap> artCache = new LruCache<>(12);
 
     private static MediaPlaybackService instance;
 
@@ -237,7 +244,14 @@ public class MediaPlaybackService extends Service {
                     long duration = intent.getLongExtra("duration", 0);
                     String artUrl = intent.getStringExtra("art");
                     boolean playing = intent.getBooleanExtra("playing", true);
-                    updateNotification(title, artist, position, duration, artUrl, playing);
+                    updateSession(title, artist, position, duration, playing);
+                    String key = title + "|" + artist + "|" + artUrl + "|" + playing;
+                    long now = SystemClock.elapsedRealtime();
+                    if (NotificationUpdatePolicy.shouldRebuild(lastNotifyKey, key, now, lastNotifyAt, 5000)) {
+                        lastNotifyKey = key;
+                        lastNotifyAt = now;
+                        postNotification(title, artist, position, duration, playing);
+                    }
                     if (artUrl != null && !artUrl.isEmpty() && !"null".equals(artUrl)) {
                         downloadArtwork(artUrl);
                     }
@@ -324,8 +338,7 @@ public class MediaPlaybackService extends Service {
         // We just broadcast the action to the MainActivity
     }
 
-    private void updateNotification(String title, String artist, long position, long duration, String artUrl, boolean playing) {
-        // Update metadata
+    private void updateSession(String title, String artist, long position, long duration, boolean playing) {
         MediaMetadataCompat metadata = new MediaMetadataCompat.Builder()
             .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
             .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
@@ -333,7 +346,6 @@ public class MediaPlaybackService extends Service {
             .build();
         mediaSession.setMetadata(metadata);
 
-        // Update playback state
         PlaybackStateCompat state = new PlaybackStateCompat.Builder()
             .setActions(
                 PlaybackStateCompat.ACTION_PLAY |
@@ -347,7 +359,14 @@ public class MediaPlaybackService extends Service {
                     position, 1.0f)
             .build();
         mediaSession.setPlaybackState(state);
+    }
 
+    private void updateNotification(String title, String artist, long position, long duration, String artUrl, boolean playing) {
+        updateSession(title, artist, position, duration, playing);
+        postNotification(title, artist, position, duration, playing);
+    }
+
+    private void postNotification(String title, String artist, long position, long duration, boolean playing) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle(title)
@@ -424,6 +443,17 @@ public class MediaPlaybackService extends Service {
             return;
         }
 
+        Bitmap cached = artCache.get(artUrl);
+        if (cached != null) {
+            currentArtUrl = artUrl;
+            mainHandler.post(() -> updateArtwork(cached));
+            return;
+        }
+        long now = SystemClock.elapsedRealtime();
+        if (artUrl.equals(lastFailedArtUrl) && now - lastArtAttemptAt < 5000) {
+            return;
+        }
+        lastArtAttemptAt = now;
         currentArtUrl = artUrl;
 
         artExecutor.execute(() -> {
@@ -435,13 +465,33 @@ public class MediaPlaybackService extends Service {
                 connection.setReadTimeout(10000);
                 connection.setDoInput(true);
                 connection.connect();
+                byte[] bytes;
                 try (InputStream input = connection.getInputStream()) {
-                    Bitmap bitmap = BitmapFactory.decodeStream(input);
-                    if (bitmap != null) {
-                        mainHandler.post(() -> updateArtwork(bitmap));
+                    java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+                    byte[] buffer = new byte[8192];
+                    int read;
+                    while ((read = input.read(buffer)) > 0) {
+                        out.write(buffer, 0, read);
                     }
+                    bytes = out.toByteArray();
+                }
+                BitmapFactory.Options bounds = new BitmapFactory.Options();
+                bounds.inJustDecodeBounds = true;
+                BitmapFactory.decodeByteArray(bytes, 0, bytes.length, bounds);
+                int sample = 1;
+                while (bounds.outWidth / (sample * 2) >= 512 && bounds.outHeight / (sample * 2) >= 512) {
+                    sample *= 2;
+                }
+                BitmapFactory.Options opts = new BitmapFactory.Options();
+                opts.inSampleSize = sample;
+                Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, opts);
+                if (bitmap != null) {
+                    artCache.put(artUrl, bitmap);
+                    lastFailedArtUrl = null;
+                    mainHandler.post(() -> updateArtwork(bitmap));
                 }
             } catch (Exception e) {
+                lastFailedArtUrl = artUrl;
                 currentArtUrl = "";
                 Log.e(TAG, "Error downloading artwork", e);
             } finally {

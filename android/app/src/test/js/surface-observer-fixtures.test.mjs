@@ -47,19 +47,22 @@ const expression = `(() => {
   };
   const music = run('<div data-testid="floating-now-playing-bar">Advertisement\\nSome Artist</div>');
   const ad = run('<div data-testid="npv-container"><button>Pelajari lebih lanjut</button><div data-testid="npv-progress-bar-time-labels">0:04 0:00</div></div>');
-  return JSON.stringify({ music, ad });
+  const audioAd = run('<div data-testid="npv-container"><button aria-label="Tutup"></button><button aria-label="Berikutnya"></button><div>Mengubah progres</div><div data-testid="npv-progress-bar-time-labels">0:05 0:00</div></div>');
+  return JSON.stringify({ music, ad, audioAd });
 })()`;
 
 const response = await send('Runtime.evaluate', { expression, returnByValue: true });
 if (response.result.exceptionDetails) {
   throw new Error(response.result.exceptionDetails.exception?.description || 'fixture evaluation failed');
 }
-const { music, ad } = JSON.parse(response.result.result.value);
+const { music, ad, audioAd } = JSON.parse(response.result.result.value);
 
 assert.equal(music.isAd, false, 'a track titled Advertisement must not be classified as an ad');
 assert.equal(music.state.track.name, 'Advertisement');
 assert.equal(ad.isAd, true, 'Premium CTA must still be classified as an ad');
+assert.equal(audioAd.isAd, true, 'audio ad without CTA or artwork must be classified as an ad');
+assert.equal(audioAd.state.track.name, 'Iklan', 'UI progress label must not become the ad title');
 
-console.log('surface_observer_fixtures_passed', JSON.stringify({ musicIsAd: music.isAd, adIsAd: ad.isAd }));
+console.log('surface_observer_fixtures_passed', JSON.stringify({ musicIsAd: music.isAd, adIsAd: ad.isAd, audioAdIsAd: audioAd.isAd }));
 ws.close();
 process.exit(0);
