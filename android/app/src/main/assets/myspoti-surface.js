@@ -67,6 +67,13 @@
     var title = text(titleEl);
     var artist = text(artistEl);
     var image = img ? img.getAttribute('src') : null;
+    if (!image && r) {
+      // Spotify renders the NPV cover as a CSS background div, not an <img>.
+      var cover = r.querySelector('[data-testid="npv-cover-art"]');
+      var bg = cover ? getComputedStyle(cover).backgroundImage : '';
+      var m = /url\(["']?([^"')]+)["']?\)/.exec(bg);
+      if (m) image = m[1];
+    }
     var ctaPresent = false;
     if (r) {
       var ctaEls = r.querySelectorAll('button,a');
@@ -126,7 +133,7 @@
     }
 
     var close = r ? findButton(CLOSE_LABEL, r) : null;
-    var hasTrackArt = !!img || !!titleEl;
+    var hasTrackArt = !!image || !!titleEl;
     var isAd = !!r && (ctaPresent || (!hasTrackArt && !!close) || (!hasTrackArt && durationMs === 0 && positionMs > 0));
     if (!isAd) adMitigated = false;
 
