@@ -612,12 +612,7 @@ public class WebPlayerHost {
 
     private void injectCosmeticFilter() {
         if (webView == null) return;
-        
-        String cosmeticScript = COSMETIC_FILTER_SCRIPT;
-        webView.evaluateJavascript(cosmeticScript, null);
-        
-        // Re-run every 2 seconds
-        mainHandler.postDelayed(this::injectCosmeticFilter, 2000);
+        webView.evaluateJavascript(COSMETIC_FILTER_SCRIPT, null);
     }
 
     private final Runnable drmWatchRunnable = new Runnable() {
@@ -964,38 +959,16 @@ public class WebPlayerHost {
         "  boot();" +
         "})()";
 
-    // Cosmetic filter script (Brave-style)
+    // CSS preserves React's DOM ownership and applies to new banners without polling.
     private static final String COSMETIC_FILTER_SCRIPT =
         "(function(){" +
-        "  try {" +
-        "    var selectors = [" +
-        "      '[data-testid*=\"ad\"]', '[data-testid*=\"Ad\"]', '[data-testid*=\"AD\"]'," +
-        "      '[data-encore-id*=\"ad\"]', '[data-encore-id*=\"Ad\"]'," +
-        "      '.AdBanner', '.ad-banner', '.advertisement', '.sponsored'," +
-        "      '[aria-label*=\"advertisement\" i]', '[aria-label*=\"sponsored\" i]'," +
-        "      'div[id^=\"google_ads_\"]', 'iframe[src*=\"doubleclick\"]'," +
-        "      'iframe[src*=\"googlesyndication\"]', 'iframe[src*=\"adnxs\"]'" +
-        "    ];" +
-        "    selectors.forEach(function(sel) {" +
-        "      try {" +
-        "        document.querySelectorAll(sel).forEach(function(el) {" +
-        "          el.style.setProperty('display', 'none', 'important');" +
-        "          el.style.setProperty('visibility', 'hidden', 'important');" +
-        "          el.style.setProperty('opacity', '0', 'important');" +
-        "          el.style.setProperty('height', '0', 'important');" +
-        "          el.style.setProperty('width', '0', 'important');" +
-        "          el.remove();" +
-        "        });" +
-        "      } catch(e) {}" +
-        "    });" +
-        "    var adTexts = ['iklan', 'advertisement', 'sponsored', 'advertising', 'promoted'];" +
-        "    document.querySelectorAll('span,div,h1,h2,h3,p,header,button').forEach(function(el) {" +
-        "      var txt = (el.textContent || '').trim().toLowerCase();" +
-        "      if (adTexts.includes(txt) && el.offsetWidth < 200 && el.offsetHeight < 100) {" +
-        "        el.style.setProperty('display', 'none', 'important');" +
-        "        el.remove();" +
-        "      }" +
-        "    });" +
-        "  } catch(e) {}" +
+        "  if (!document.head || document.getElementById('cpotify-cosmetic-filter')) return;" +
+        "  var style = document.createElement('style');" +
+        "  style.id = 'cpotify-cosmetic-filter';" +
+        "  style.textContent = '.AdBanner, .ad-banner, .advertisement, .sponsored,' +" +
+        "    'div[id^=\"google_ads_\"], iframe[src*=\"doubleclick\"],' +" +
+        "    'iframe[src*=\"googlesyndication\"], iframe[src*=\"adnxs\"]' +" +
+        "    '{display:none !important;}';" +
+        "  document.head.appendChild(style);" +
         "})()";
 }
