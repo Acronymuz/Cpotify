@@ -966,7 +966,7 @@ public class WebPlayerHost {
         "  var style = document.createElement('style');" +
         "  style.id = 'cpotify-cosmetic-filter';" +
         "  style.textContent = '.AdBanner, .ad-banner, .advertisement, .sponsored,' +" +
-        "    'div[id^=\"google_ads_\"], iframe[src*=\"doubleclick\"],' +" +
+        "    '[data-testid=\"premium-banner\"], div[id^=\"google_ads_\"], iframe[src*=\"doubleclick\"],' +" +
         "    'iframe[src*=\"googlesyndication\"], iframe[src*=\"adnxs\"]' +" +
         "    '{display:none !important;}';" +
         "  document.head.appendChild(style);" +

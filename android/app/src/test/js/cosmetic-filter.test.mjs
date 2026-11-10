@@ -23,12 +23,14 @@ const expression = `(() => {
     doc.body.innerHTML = '<main><div data-testid="npv-header">Now playing</div>' +
       '<div data-testid="track-metadata">Advertisement</div>' +
       '<button aria-label="Advertisement">Play track</button>' +
-      '<div class="ad-banner">Promotion</div></main>';
+      '<div class="ad-banner">Promotion</div>' +
+      '<div data-testid="premium-banner">Premium upsell</div></main>';
     const parent = doc.querySelector('main');
     const header = doc.querySelector('[data-testid="npv-header"]');
     const title = doc.querySelector('[data-testid="track-metadata"]');
     const button = doc.querySelector('button');
     const ad = doc.querySelector('.ad-banner');
+    const premium = doc.querySelector('[data-testid="premium-banner"]');
     win.eval(${JSON.stringify(script)});
     const before = {
       headerAttached: header.parentNode === parent,
@@ -37,7 +39,9 @@ const expression = `(() => {
       titleDisplay: win.getComputedStyle(title).display,
       buttonDisplay: win.getComputedStyle(button).display,
       adAttached: ad.parentNode === parent,
-      adDisplay: win.getComputedStyle(ad).display
+      adDisplay: win.getComputedStyle(ad).display,
+      premiumAttached: premium.parentNode === parent,
+      premiumDisplay: win.getComputedStyle(premium).display
     };
     const nodesBefore = doc.querySelectorAll('*').length;
     for (let i = 0; i < 20; i++) win.eval(${JSON.stringify(script)});
@@ -85,6 +89,11 @@ test('preserves player header and track metadata, including a song named Adverti
 test('hides dedicated ad banners without detaching React-owned nodes', () => {
   assert.equal(result.before.adAttached, true);
   assert.equal(result.before.adDisplay, 'none');
+});
+
+test('hides the home Premium upsell banner without detaching it', () => {
+  assert.equal(result.before.premiumAttached, true);
+  assert.equal(result.before.premiumDisplay, 'none');
 });
 
 test('allows the page to reconcile its own children without NotFoundError', () => {
