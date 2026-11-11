@@ -166,6 +166,30 @@
     };
   }
 
+  var skipPending = null;
+  var skipTimer = null;
+
+  // When minimized to the floating bar, Spotify removes the skip buttons from
+  // the DOM. Expand the NPV via the cover, then click the button once rendered.
+  function skip(re) {
+    var btn = findButton(re);
+    if (btn) { btn.click(); return true; }
+    var bar = document.querySelector('[data-testid="floating-now-playing-bar"]');
+    var cover = bar && bar.querySelector('img');
+    if (!cover) return false;
+    skipPending = re;
+    if (!skipTimer) {
+      cover.click();
+      var tries = 0;
+      skipTimer = setInterval(function () {
+        var b = skipPending && findButton(skipPending);
+        if (b) { b.click(); skipPending = null; clearInterval(skipTimer); skipTimer = null; }
+        else if (++tries >= 20) { skipPending = null; clearInterval(skipTimer); skipTimer = null; }
+      }, 100);
+    }
+    return true;
+  }
+
   function control(action, args) {
     var target = null;
     if (action === 'play' || action === 'pause') {
@@ -177,9 +201,9 @@
         if (wantsPause === currentlyPaused) return false;
       }
     } else if (action === 'next') {
-      target = findButton(NEXT_LABEL);
+      return skip(NEXT_LABEL);
     } else if (action === 'previous' || action === 'prev') {
-      target = findButton(PREV_LABEL);
+      return skip(PREV_LABEL);
     } else if (action === 'seek') {
       var bar = progressBar();
       if (!bar || !args || !Number.isFinite(args.positionMs)) return false;
