@@ -48,6 +48,7 @@ public class MediaPlaybackService extends Service {
     private PowerManager.WakeLock wakeLock;
     private BroadcastReceiver mediaUpdateReceiver;
     private BroadcastReceiver mediaControlReceiver;
+    private BroadcastReceiver noisyReceiver;
     private NotificationManager notificationManager;
 
     private final ExecutorService artExecutor = Executors.newSingleThreadExecutor();
@@ -113,6 +114,11 @@ public class MediaPlaybackService extends Service {
         if (mediaControlReceiver != null) {
             try {
                 unregisterReceiver(mediaControlReceiver);
+            } catch (IllegalArgumentException ignored) {}
+        }
+        if (noisyReceiver != null) {
+            try {
+                unregisterReceiver(noisyReceiver);
             } catch (IllegalArgumentException ignored) {}
         }
         if (mediaSession != null) {
@@ -267,6 +273,24 @@ public class MediaPlaybackService extends Service {
         }
 
         // Media control commands are handled by MainActivity against the player WebView.
+
+        // Pause when audio is about to become noisy (earphones unplugged / Bluetooth
+        // disconnected) so playback does not blast from the phone speaker.
+        noisyReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intent.getAction())) {
+                    Log.d(TAG, "Audio becoming noisy; pausing playback");
+                    sendMediaControl("pause");
+                }
+            }
+        };
+        IntentFilter noisyFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(noisyReceiver, noisyFilter, Context.RECEIVER_EXPORTED);
+        } else {
+            registerReceiver(noisyReceiver, noisyFilter);
+        }
     }
 
     private void startForegroundService() {
