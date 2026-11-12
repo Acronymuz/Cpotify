@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -25,10 +26,16 @@ public class MainActivity extends BridgeActivity implements WebPlayerHost.StateC
     private static final String TAG = "SpotifyMobile";
     private static final String MEDIA_CONTROL_ACTION = "com.cpotify.app.MEDIA_CONTROL";
     private static final String UPDATE_MEDIA_ACTION = "com.cpotify.app.UPDATE_MEDIA";
+    private static final String PREFS_NAME = "cpotify_ad_restart";
+    private static final String KEY_LAST_AD_RESTART = "last_ad_restart";
+    private static final long AUTO_RESUME_WINDOW_MS = 30000;
 
     private BroadcastReceiver mediaControlReceiver;
     private WebPlayerHost webPlayerHost;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private long adFirstSeenAt = 0;
+    private boolean pendingAutoResume = false;
+    private long autoResumeDeadline = 0;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -116,6 +123,10 @@ public class MainActivity extends BridgeActivity implements WebPlayerHost.StateC
                 JSONObject track = state.optJSONObject("track");
                 if (track == null) return;
 
+                String kind = track.optString("kind", "track");
+                handleAdWatchdog(kind);
+                if (!"ad".equals(kind)) maybeAutoResume(isPaused);
+
                 String title = track.optString("name", "Unknown");
                 String artist = "";
                 JSONArray artists = track.optJSONArray("artists");
@@ -140,6 +151,48 @@ public class MainActivity extends BridgeActivity implements WebPlayerHost.StateC
                 Log.e(TAG, "Error forwarding player state", e);
             }
         });
+    }
+
+    private void handleAdWatchdog(String kind) {
+        long now = System.currentTimeMillis();
+        if (!"ad".equals(kind)) {
+            adFirstSeenAt = 0;
+            return;
+        }
+        if (adFirstSeenAt == 0) adFirstSeenAt = now;
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        long lastRestart = prefs.getLong(KEY_LAST_AD_RESTART, 0);
+        if (AdRestartPolicy.shouldRestart(adFirstSeenAt, lastRestart, now)) {
+            prefs.edit().putLong(KEY_LAST_AD_RESTART, now).apply();
+            WebView playerWebView = webPlayerHost != null ? webPlayerHost.getWebView() : null;
+            if (playerWebView != null) {
+                // A fresh page load drops the in-page ad session and restores the track,
+                // without killing the process (which Android 14+ blocks from relaunching).
+                Log.d(TAG, "Sustained ad detected; reloading player to resume ad-free");
+                pendingAutoResume = true;
+                autoResumeDeadline = now + AUTO_RESUME_WINDOW_MS;
+                adFirstSeenAt = 0;
+                playerWebView.reload();
+            }
+        }
+    }
+
+    private void maybeAutoResume(boolean isPaused) {
+        if (!pendingAutoResume) return;
+        if (System.currentTimeMillis() > autoResumeDeadline || !isPaused) {
+            pendingAutoResume = false;
+            return;
+        }
+        WebView playerWebView = webPlayerHost != null ? webPlayerHost.getWebView() : null;
+        if (playerWebView != null) {
+            // Open NPV play button when expanded; otherwise tap the floating-bar cover,
+            // which expands the NPV and reactivates the restored (paused) track.
+            playerWebView.evaluateJavascript(
+                "(function(){var b=document.querySelector('[data-testid=\"npv-play-button\"]');" +
+                "if(b){b.click();return;}" +
+                "var bar=document.querySelector('[data-testid=\"floating-now-playing-bar\"]');" +
+                "var img=bar&&bar.querySelector('img');if(img)img.click();})()", null);
+        }
     }
 
     @Override
