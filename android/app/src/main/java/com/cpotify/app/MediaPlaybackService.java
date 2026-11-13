@@ -38,7 +38,7 @@ import java.util.concurrent.Executors;
 public class MediaPlaybackService extends Service {
 
     private static final String TAG = "MediaPlaybackService";
-    private static final String CHANNEL_ID = "spotify_media_playback_v2";
+    public static final String CHANNEL_ID = "spotify_media_playback_v2";
     private static final int NOTIFICATION_ID = 1;
     private static final String UPDATE_MEDIA_ACTION = "com.cpotify.app.UPDATE_MEDIA";
     private static final String MEDIA_CONTROL_ACTION = "com.cpotify.app.MEDIA_CONTROL";

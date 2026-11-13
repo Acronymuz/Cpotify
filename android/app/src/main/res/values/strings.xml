@@ -3,4 +3,5 @@
     <string name="title_activity_main">Cpotify</string>
     <string name="spotify_media_playback">Cpotify Media Playback</string>
     <string name="spotify_media_playback_desc">Media playback controls and notifications</string>
+    <string name="resume_accessibility_description">Memungkinkan Cpotify melanjutkan lagu terakhir secara otomatis setelah iklan dengan ketukan pada tombol putar.</string>
 </resources>
