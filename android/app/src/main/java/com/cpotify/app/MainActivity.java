@@ -13,6 +13,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.util.Log;
 import android.webkit.WebView;
 
@@ -35,6 +36,8 @@ public class MainActivity extends BridgeActivity implements WebPlayerHost.StateC
     private static final long AUTO_RESUME_WINDOW_MS = 30000;
     public static final String EXTRA_RESUME_AD = "com.cpotify.app.RESUME_AD";
     private static final int AD_RESUME_NOTIFICATION_ID = 2;
+    private static final int HEALTH_NOTIFICATION_ID = 3;
+    private static final String KEY_LAST_HEALTH_NOTIFY = "last_health_notify";
 
     private BroadcastReceiver mediaControlReceiver;
     private WebPlayerHost webPlayerHost;
@@ -233,6 +236,7 @@ public class MainActivity extends BridgeActivity implements WebPlayerHost.StateC
         }
         // Trusted autoclicker tap resumes playback where synthetic JS clicks fail.
         ResumeAccessibilityService.requestResume();
+        notifyIfAccessibilityDisabled();
     }
 
     private void postAdResumeNotification() {
@@ -260,6 +264,51 @@ public class MainActivity extends BridgeActivity implements WebPlayerHost.StateC
     private void cancelAdResumeNotification() {
         NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (nm != null) nm.cancel(AD_RESUME_NOTIFICATION_ID);
+    }
+
+    // HyperOS can disable the accessibility service, silently degrading the bot to
+    // unreliable JS clicks. Surface that state and offer the manual Xiaomi settings
+    // that no code can apply without root.
+    private void notifyIfAccessibilityDisabled() {
+        if (ResumeAccessibilityService.isReady()) return;
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        long now = System.currentTimeMillis();
+        if (!AccessibilityHealthPolicy.shouldNotify(false, prefs.getLong(KEY_LAST_HEALTH_NOTIFY, 0), now)) return;
+        prefs.edit().putLong(KEY_LAST_HEALTH_NOTIFY, now).apply();
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm == null) return;
+        PendingIntent accessibility = settingsPendingIntent(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS), 2);
+        PendingIntent battery = settingsPendingIntent(new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS), 3);
+        PendingIntent autostart = settingsPendingIntent(autostartIntent(), 4);
+        Notification notification = new NotificationCompat.Builder(this, MediaPlaybackService.CHANNEL_ID)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentTitle("Bot perlu setup background")
+            .setContentText("Accessibility Cpotify mati. Ketuk untuk aktifkan agar lanjut-otomatis bekerja.")
+            .setStyle(new NotificationCompat.BigTextStyle().bigText(
+                "Lanjut-otomatis butuh Accessibility Cpotify aktif. Agar bot tahan di Xiaomi/HyperOS, "
+                + "aktifkan juga Autostart dan baterai tanpa batasan (tombol di bawah), lalu kunci app di Recents. "
+                + "Setelan ini manual; tanpa root tidak bisa otomatis."))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(accessibility)
+            .addAction(android.R.drawable.ic_menu_manage, "Accessibility", accessibility)
+            .addAction(android.R.drawable.ic_menu_manage, "Baterai", battery)
+            .addAction(android.R.drawable.ic_menu_manage, "Autostart", autostart)
+            .build();
+        nm.notify(HEALTH_NOTIFICATION_ID, notification);
+    }
+
+    private PendingIntent settingsPendingIntent(Intent intent, int requestCode) {
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        return PendingIntent.getActivity(this, requestCode, intent,
+            PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
+    private Intent autostartIntent() {
+        Intent miui = new Intent();
+        miui.setClassName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity");
+        if (getPackageManager().resolveActivity(miui, 0) != null) return miui;
+        return new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getPackageName()));
     }
 
     private void maybeAutoResume(boolean isPaused) {
